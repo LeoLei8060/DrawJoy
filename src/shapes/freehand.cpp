@@ -1,36 +1,25 @@
 #include "freehand.h"
 
-Freehand::Freehand(const QPoint& startPoint)
+Freehand::Freehand(const QPoint& startPoint, const QColor& color)
+    : Shape(startPoint, color)
 {
     points.append(startPoint);
-    path.moveTo(startPoint);
 }
 
 void Freehand::draw(QPainter& painter) const
 {
-    QPen pen(Qt::black, PEN_WIDTH);
-    pen.setCapStyle(Qt::RoundCap);
-    pen.setJoinStyle(Qt::RoundJoin);
-    painter.setPen(pen);
-    painter.setBrush(Qt::NoBrush);
-    painter.drawPath(path);
+    painter.setPen(QPen(penColor, 2));
+    if (points.size() > 1) {
+        for (int i = 1; i < points.size(); ++i) {
+            painter.drawLine(points[i-1], points[i]);
+        }
+    }
 }
 
 void Freehand::updateShape(const QPoint& pos)
 {
     if (!complete) {
         points.append(pos);
-        if (points.size() > 1) {
-            // 使用二次贝塞尔曲线使线条更平滑
-            const QPoint& p1 = points[points.size() - 2];
-            const QPoint& p2 = points[points.size() - 1];
-            QPoint mid = (p1 + p2) / 2;
-            
-            if (points.size() == 2) {
-                path.moveTo(points.first());
-            }
-            path.quadTo(p1, mid);
-        }
     }
 }
 
@@ -41,9 +30,8 @@ bool Freehand::isComplete() const
 
 Shape* Freehand::clone() const
 {
-    Freehand* newFreehand = new Freehand(points.first());
-    newFreehand->points = points;
-    newFreehand->path = path;
-    newFreehand->complete = complete;
-    return newFreehand;
+    auto* newShape = new Freehand(start, penColor);
+    newShape->points = points;
+    newShape->complete = complete;
+    return newShape;
 }

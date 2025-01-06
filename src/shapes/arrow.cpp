@@ -1,23 +1,22 @@
 #include "arrow.h"
 #include <QtMath>
 
-Arrow::Arrow(const QPoint& point)
-    : startPoint(point)
-    , endPoint(point)
+Arrow::Arrow(const QPoint& startPoint, const QColor& color)
+    : Shape(startPoint, color)
 {
+    endPoint = startPoint;
 }
 
 void Arrow::draw(QPainter& painter) const
 {
-    QPen pen(Qt::black, 2);
-    painter.setPen(pen);
-    painter.setBrush(Qt::black);
+    painter.setPen(QPen(penColor, 2));
+    painter.setBrush(penColor);
 
-    // 绘制箭头主干线
-    painter.drawLine(startPoint, endPoint);
+    // 绘制主线
+    painter.drawLine(start, endPoint);
 
-    // 绘制箭头头部
-    if (startPoint != endPoint) {
+    // 绘制箭头
+    if (start != endPoint) {
         painter.drawPolygon(createArrowHead());
     }
 }
@@ -36,34 +35,27 @@ bool Arrow::isComplete() const
 
 Shape* Arrow::clone() const
 {
-    Arrow* newArrow = new Arrow(startPoint);
-    newArrow->endPoint = endPoint;
-    newArrow->complete = complete;
-    return newArrow;
+    auto* newShape = new Arrow(start, penColor);
+    newShape->endPoint = endPoint;
+    newShape->complete = complete;
+    return newShape;
 }
 
 QPolygon Arrow::createArrowHead() const
 {
     QPolygon arrowHead;
-    
-    // 计算箭头方向角度
-    double angle = qAtan2(endPoint.y() - startPoint.y(), 
-                         endPoint.x() - startPoint.x());
-    
-    // 计算箭头两个翼的端点
-    double leftAngle = angle + qDegreesToRadians(ARROW_HEAD_ANGLE);
-    double rightAngle = angle - qDegreesToRadians(ARROW_HEAD_ANGLE);
-    
-    QPoint leftPoint(
-        endPoint.x() - ARROW_HEAD_SIZE * qCos(leftAngle),
-        endPoint.y() - ARROW_HEAD_SIZE * qSin(leftAngle)
-    );
-    
-    QPoint rightPoint(
-        endPoint.x() - ARROW_HEAD_SIZE * qCos(rightAngle),
-        endPoint.y() - ARROW_HEAD_SIZE * qSin(rightAngle)
-    );
-    
-    arrowHead << endPoint << leftPoint << rightPoint;
+    QPointF direction(endPoint - start);
+    qreal angle = qAtan2(-direction.y(), direction.x());
+
+    // 计算箭头两个点的位置
+    qreal arrowAngle1 = angle + qDegreesToRadians(ARROW_HEAD_ANGLE);
+    qreal arrowAngle2 = angle - qDegreesToRadians(ARROW_HEAD_ANGLE);
+
+    QPointF arrowPoint1(endPoint.x() - ARROW_HEAD_SIZE * qCos(arrowAngle1),
+                       endPoint.y() + ARROW_HEAD_SIZE * qSin(arrowAngle1));
+    QPointF arrowPoint2(endPoint.x() - ARROW_HEAD_SIZE * qCos(arrowAngle2),
+                       endPoint.y() + ARROW_HEAD_SIZE * qSin(arrowAngle2));
+
+    arrowHead << endPoint << arrowPoint1.toPoint() << arrowPoint2.toPoint();
     return arrowHead;
 }

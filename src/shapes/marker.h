@@ -3,12 +3,13 @@
 
 #include "shape.h"
 #include <QPoint>
+#include <QVector>
 #include <QColor>
 
 class Marker : public Shape
 {
 public:
-    Marker(const QPoint& startPoint);
+    Marker(const QPoint& startPoint, const QColor& color = Qt::black);
     ~Marker() override = default;
 
     void draw(QPainter& painter) const override;
@@ -17,11 +18,9 @@ public:
     Shape* clone() const override;
 
 private:
-    QPoint startPoint;
-    QPoint endPoint;
-    static constexpr int MARKER_WIDTH = 20;  // 马克笔宽度
-    static constexpr int MARKER_ALPHA = 50;  // 透明度 (0-255)
-    const QColor MARKER_COLOR = QColor(255, 255, 0, MARKER_ALPHA);  // 黄色半透明
+    QVector<QPoint> points;
+    bool complete = false;
+    static constexpr int MARKER_WIDTH = 10;
 };
 
 #endif // MARKER_H

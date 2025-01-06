@@ -1,6 +1,7 @@
 #include "polyline.h"
 
-Polyline::Polyline(const QPoint& startPoint)
+Polyline::Polyline(const QPoint& startPoint, const QColor& color)
+    : Shape(startPoint, color)
 {
     points.append(startPoint);
     currentPoint = startPoint;
@@ -10,8 +11,7 @@ void Polyline::draw(QPainter& painter) const
 {
     if (points.isEmpty()) return;
 
-    QPen pen(Qt::black, 2);
-    painter.setPen(pen);
+    painter.setPen(QPen(penColor, 2));
 
     // 绘制已确定的线段
     for (int i = 0; i < points.size() - 1; ++i) {
@@ -27,6 +27,9 @@ void Polyline::draw(QPainter& painter) const
 void Polyline::updateShape(const QPoint& pos)
 {
     if (complete) return;
+    if (points.size() > 0) {
+        points.append(pos);
+    }
     currentPoint = pos;
 }
 
@@ -37,7 +40,7 @@ bool Polyline::isComplete() const
 
 Shape* Polyline::clone() const
 {
-    Polyline* newPolyline = new Polyline(points.first());
+    auto* newPolyline = new Polyline(points.first(), penColor);
     newPolyline->points = points;
     newPolyline->currentPoint = currentPoint;
     newPolyline->complete = complete;

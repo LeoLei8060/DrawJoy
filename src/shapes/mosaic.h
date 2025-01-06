@@ -5,6 +5,7 @@
 #include <QVector>
 #include <QPoint>
 #include <QRect>
+#include <QColor>
 
 class Mosaic : public Shape
 {
@@ -14,7 +15,7 @@ public:
         Rectangle
     };
 
-    Mosaic(const QPoint& startPoint, MosaicType type = MosaicType::Rectangle);
+    Mosaic(const QPoint& startPoint, MosaicType type = MosaicType::Rectangle, const QColor& color = Qt::black);
     ~Mosaic() override = default;
 
     void draw(QPainter& painter) const override;
@@ -25,6 +26,8 @@ public:
 private:
     QVector<QPoint> points;
     MosaicType type;
+    QColor color;
+    bool complete = false;
     static constexpr int MOSAIC_SIZE = 10;  // 马赛克大小
     static constexpr int MIN_DISTANCE = 5;  // 两个马赛克之间的最小距离
 

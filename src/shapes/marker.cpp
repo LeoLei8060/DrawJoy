@@ -1,39 +1,52 @@
 #include "marker.h"
 #include <QtMath>
 
-Marker::Marker(const QPoint& point)
-    : startPoint(point)
-    , endPoint(point)
+Marker::Marker(const QPoint& startPoint, const QColor& color)
+    : Shape(startPoint, color)
 {
+    points.append(startPoint);
 }
 
 void Marker::draw(QPainter& painter) const
 {
-    if (startPoint == endPoint) return;
+    QColor markerColor = penColor;
+    markerColor.setAlpha(50);  // 设置透明度
+    painter.setPen(Qt::NoPen);
+    painter.setBrush(markerColor);
 
-    // 保存当前画笔设置
-    painter.save();
+    if (points.size() > 1) {
+        for (int i = 1; i < points.size(); ++i) {
+            const QPoint& p1 = points[i-1];
+            const QPoint& p2 = points[i];
+            
+            // 计算线段的方向向量
+            QPointF dir = QPointF(p2 - p1);
+            qreal length = qSqrt(dir.x() * dir.x() + dir.y() * dir.y());
+            if (length > 0) {
+                dir /= length;
+                
+                // 计算垂直于方向的向量
+                QPointF normal(-dir.y(), dir.x());
+                normal *= MARKER_WIDTH / 2.0;
 
-    // 设置画笔
-    QPen pen(MARKER_COLOR, MARKER_WIDTH);
-    pen.setCapStyle(Qt::RoundCap);
-    pen.setJoinStyle(Qt::RoundJoin);
-    painter.setPen(pen);
+                // 构建多边形的四个顶点
+                QPointF points[4] = {
+                    QPointF(p1) + normal,
+                    QPointF(p1) - normal,
+                    QPointF(p2) - normal,
+                    QPointF(p2) + normal
+                };
 
-    // 启用抗锯齿
-    painter.setRenderHint(QPainter::Antialiasing);
-
-    // 绘制马克笔线条
-    painter.drawLine(startPoint, endPoint);
-
-    // 恢复之前的画笔设置
-    painter.restore();
+                painter.drawPolygon(points, 4);
+            }
+        }
+    }
 }
 
 void Marker::updateShape(const QPoint& pos)
 {
     if (!complete) {
-        endPoint = pos;
+        points.append(pos);
     }
 }
 
@@ -44,8 +57,8 @@ bool Marker::isComplete() const
 
 Shape* Marker::clone() const
 {
-    Marker* newMarker = new Marker(startPoint);
-    newMarker->endPoint = endPoint;
-    newMarker->complete = complete;
-    return newMarker;
+    auto* newShape = new Marker(start, penColor);
+    newShape->points = points;
+    newShape->complete = complete;
+    return newShape;
 }

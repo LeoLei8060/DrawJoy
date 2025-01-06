@@ -1,15 +1,14 @@
 #include "ellipse.h"
 
-Ellipse::Ellipse(const QPoint& point)
-    : startPoint(point)
-    , endPoint(point)
+Ellipse::Ellipse(const QPoint& startPoint, const QColor& color)
+    : Shape(startPoint, color)
 {
+    endPoint = startPoint;
 }
 
 void Ellipse::draw(QPainter& painter) const
 {
-    QPen pen(Qt::black, 2);
-    painter.setPen(pen);
+    painter.setPen(QPen(penColor, 2));
     painter.setBrush(Qt::NoBrush);
     painter.drawEllipse(boundingRect());
 }
@@ -28,13 +27,13 @@ bool Ellipse::isComplete() const
 
 Shape* Ellipse::clone() const
 {
-    Ellipse* newEllipse = new Ellipse(startPoint);
-    newEllipse->endPoint = endPoint;
-    newEllipse->complete = complete;
-    return newEllipse;
+    auto* newShape = new Ellipse(start, penColor);
+    newShape->endPoint = endPoint;
+    newShape->complete = complete;
+    return newShape;
 }
 
 QRect Ellipse::boundingRect() const
 {
-    return QRect(startPoint, endPoint).normalized();
+    return QRect(start, endPoint).normalized();
 }

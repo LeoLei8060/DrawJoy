@@ -7,6 +7,7 @@
 #include <memory>
 #include <QInputDialog>
 #include <QKeyEvent>
+#include <QColor> // 添加QColor头文件
 
 // 前向声明
 class Shape;
@@ -39,6 +40,7 @@ public:
     ~Canvas();
 
     void setDrawMode(int mode);
+    void setPenColor(const QColor& color);  // 添加设置画笔颜色的方法
     void undo();
     void redo();
 
@@ -62,6 +64,7 @@ private:
     std::vector<std::unique_ptr<Shape>> redoStack;
     int mosaicType = 0; // 0 for Rectangle, 1 for Circle
     QString preeditString;  // 用于存储输入法的预编辑文本
+    QColor penColor; // 添加画笔颜色成员变量
 };
 
 #endif // CANVAS_H

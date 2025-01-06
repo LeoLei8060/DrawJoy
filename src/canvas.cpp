@@ -16,6 +16,7 @@ Canvas::Canvas(QWidget *parent)
     : QWidget(parent)
     , currentMode(DrawMode::DrawPolyline)
     , mosaicType(0)
+    , penColor(Qt::black)  // 初始化画笔颜色为黑色
 {
     setMouseTracking(true);
     setAttribute(Qt::WA_StaticContents);
@@ -209,28 +210,28 @@ void Canvas::createShape(const QPoint& pos)
 {
     switch (currentMode) {
     case DrawMode::DrawPolyline:
-        currentShape = std::make_unique<Polyline>(pos);
+        currentShape = std::make_unique<Polyline>(pos, penColor);
         break;
     case DrawMode::DrawEllipse:
-        currentShape = std::make_unique<Ellipse>(pos);
+        currentShape = std::make_unique<Ellipse>(pos, penColor);
         break;
     case DrawMode::DrawRectangle:
-        currentShape = std::make_unique<Rectangle>(pos);
+        currentShape = std::make_unique<Rectangle>(pos, penColor);
         break;
     case DrawMode::DrawArrow:
-        currentShape = std::make_unique<Arrow>(pos);
+        currentShape = std::make_unique<Arrow>(pos, penColor);
         break;
     case DrawMode::DrawFreehand:
-        currentShape = std::make_unique<Freehand>(pos);
+        currentShape = std::make_unique<Freehand>(pos, penColor);
         break;
     case DrawMode::DrawMarker:
-        currentShape = std::make_unique<Marker>(pos);
+        currentShape = std::make_unique<Marker>(pos, penColor);
         break;
     case DrawMode::DrawMosaic:
-        currentShape = std::make_unique<Mosaic>(pos, static_cast<Mosaic::MosaicType>(mosaicType));
+        currentShape = std::make_unique<Mosaic>(pos, static_cast<Mosaic::MosaicType>(mosaicType), penColor);
         break;
     case DrawMode::DrawText:
-        currentShape = std::make_unique<Text>(pos);
+        currentShape = std::make_unique<Text>(pos, penColor);
         break;
     default:
         break;
@@ -275,6 +276,15 @@ void Canvas::setDrawMode(int mode)
             return;
         }
         finishCurrentShape();
+        update();
+    }
+}
+
+void Canvas::setPenColor(const QColor& color)
+{
+    penColor = color;
+    if (currentShape) {
+        currentShape->setPenColor(color);
         update();
     }
 }

@@ -1,15 +1,14 @@
 #include "rectangle.h"
 
-Rectangle::Rectangle(const QPoint& point)
-    : startPoint(point)
-    , endPoint(point)
+Rectangle::Rectangle(const QPoint& startPoint, const QColor& color)
+    : Shape(startPoint, color)
 {
+    endPoint = startPoint;
 }
 
 void Rectangle::draw(QPainter& painter) const
 {
-    QPen pen(Qt::black, 2);
-    painter.setPen(pen);
+    painter.setPen(QPen(penColor, 2));
     painter.setBrush(Qt::NoBrush);
     painter.drawRect(boundingRect());
 }
@@ -28,10 +27,10 @@ bool Rectangle::isComplete() const
 
 Shape* Rectangle::clone() const
 {
-    Rectangle* newRect = new Rectangle(startPoint);
-    newRect->endPoint = endPoint;
-    newRect->complete = complete;
-    return newRect;
+    auto* newShape = new Rectangle(start, penColor);
+    newShape->endPoint = endPoint;
+    newShape->complete = complete;
+    return newShape;
 }
 
 QRect Rectangle::boundingRect() const

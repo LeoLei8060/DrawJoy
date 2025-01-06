@@ -4,12 +4,12 @@
 #include "shape.h"
 #include <QVector>
 #include <QPoint>
-#include <QPainterPath>
+#include <QColor>
 
 class Freehand : public Shape
 {
 public:
-    Freehand(const QPoint& startPoint);
+    Freehand(const QPoint& startPoint, const QColor& color = Qt::black);
     ~Freehand() override = default;
 
     void draw(QPainter& painter) const override;
@@ -19,8 +19,9 @@ public:
 
 private:
     QVector<QPoint> points;
-    QPainterPath path;
+    QColor color;
     static constexpr int PEN_WIDTH = 2;
+    bool complete = false;
 };
 
 #endif // FREEHAND_H

@@ -1,8 +1,11 @@
 #include "mainwindow.h"
 #include <QIcon>
+#include <QPainter>
+#include <QPixmap>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
+    , currentColor(Qt::black)  // 默认颜色为黑色
 {
     // 创建画布
     canvas = new Canvas(this);
@@ -31,8 +34,8 @@ void MainWindow::createToolBar()
 
     // 创建绘图工具按钮
     auto createToolButton = [this, toolBar, drawButtonGroup](const QString &iconPath, const QString &tip, int drawMode) {
-        auto *button = new QToolButton;  // 先创建按钮
-        button->setParent(toolBar);      // 然后设置父对象
+        auto *button = new QToolButton;
+        button->setParent(toolBar);
         button->setIcon(QIcon(iconPath));
         button->setToolTip(tip);
         button->setCheckable(true);  // 设置为可选中状态
@@ -63,6 +66,18 @@ void MainWindow::createToolBar()
     // 添加分隔符
     toolBar->addSeparator();
 
+    // 添加颜色选择按钮
+    colorButton = new QToolButton;
+    colorButton->setParent(toolBar);
+    colorButton->setToolTip(tr("画笔颜色"));
+    colorButton->setPopupMode(QToolButton::InstantPopup);
+    toolBar->addWidget(colorButton);
+    connect(colorButton, &QToolButton::clicked, this, &MainWindow::selectColor);
+    updateColorButton();  // 初始化颜色按钮的图标
+
+    // 添加分隔符
+    toolBar->addSeparator();
+
     // 添加撤销和重做按钮（这些不需要互斥）
     auto *undoButton = new QToolButton;
     undoButton->setParent(toolBar);
@@ -77,4 +92,28 @@ void MainWindow::createToolBar()
     redoButton->setToolTip(tr("重做"));
     toolBar->addWidget(redoButton);
     connect(redoButton, &QToolButton::clicked, canvas, &Canvas::redo);
+}
+
+void MainWindow::selectColor()
+{
+    QColor color = QColorDialog::getColor(currentColor, this, tr("选择画笔颜色"));
+    if (color.isValid()) {
+        currentColor = color;
+        updateColorButton();
+        canvas->setPenColor(currentColor);
+    }
+}
+
+void MainWindow::updateColorButton()
+{
+    // 创建一个16x16的图标
+    QPixmap pixmap(16, 16);
+    pixmap.fill(currentColor);
+    
+    // 添加边框
+    QPainter painter(&pixmap);
+    painter.setPen(Qt::black);
+    painter.drawRect(0, 0, 15, 15);
+    
+    colorButton->setIcon(QIcon(pixmap));
 }

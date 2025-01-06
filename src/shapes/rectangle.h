@@ -3,12 +3,12 @@
 
 #include "shape.h"
 #include <QPoint>
-#include <QRect>
+#include <QColor>
 
 class Rectangle : public Shape
 {
 public:
-    Rectangle(const QPoint& startPoint);
+    Rectangle(const QPoint& startPoint, const QColor& color = Qt::black);
     ~Rectangle() override = default;
 
     void draw(QPainter& painter) const override;
@@ -19,6 +19,8 @@ public:
 private:
     QPoint startPoint;
     QPoint endPoint;
+    QColor color;
+    bool complete = false;
     QRect boundingRect() const;
 };
 

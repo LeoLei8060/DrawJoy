@@ -1,8 +1,9 @@
 #include "mosaic.h"
 #include <QtMath>
 
-Mosaic::Mosaic(const QPoint& startPoint, MosaicType type)
-    : type(type)
+Mosaic::Mosaic(const QPoint& startPoint, MosaicType type, const QColor& color)
+    : Shape(startPoint, color)
+    , type(type)
 {
     points.append(startPoint);
 }
@@ -10,10 +11,18 @@ Mosaic::Mosaic(const QPoint& startPoint, MosaicType type)
 void Mosaic::draw(QPainter& painter) const
 {
     painter.setPen(Qt::NoPen);
-    painter.setBrush(QColor(128, 128, 128));  // 使用灰色填充
+    painter.setBrush(penColor);
 
     for (const QPoint& point : points) {
-        drawMosaicUnit(painter, point);
+        QRect rect(point.x() - MOSAIC_SIZE/2, 
+                  point.y() - MOSAIC_SIZE/2,
+                  MOSAIC_SIZE, MOSAIC_SIZE);
+
+        if (type == MosaicType::Rectangle) {
+            painter.drawRect(rect);
+        } else {
+            painter.drawEllipse(rect);
+        }
     }
 }
 
@@ -31,10 +40,10 @@ bool Mosaic::isComplete() const
 
 Shape* Mosaic::clone() const
 {
-    Mosaic* newMosaic = new Mosaic(points.first(), type);
-    newMosaic->points = points;
-    newMosaic->complete = complete;
-    return newMosaic;
+    auto* newShape = new Mosaic(start, type, penColor);
+    newShape->points = points;
+    newShape->complete = complete;
+    return newShape;
 }
 
 void Mosaic::drawMosaicUnit(QPainter& painter, const QPoint& center) const

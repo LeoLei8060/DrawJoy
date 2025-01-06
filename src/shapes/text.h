@@ -14,7 +14,7 @@ class Text : public Shape
 {
     friend class Canvas;  // 允许Canvas访问私有成员
 public:
-    Text(const QPoint& pos);
+    Text(const QPoint& pos, const QColor& color = Qt::black);
     ~Text() override = default;
 
     void draw(QPainter& painter) const override;
@@ -31,6 +31,7 @@ public:
     void startMove(const QPoint& pos);
     void updateBackgroundColor(const QColor& color);
     void setBackground(const QPixmap& bg) { background = bg; }
+    void setFont(const QFont& font) { this->font = font; }
 
 private:
     QPoint position;

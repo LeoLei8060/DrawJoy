@@ -3,7 +3,7 @@
 
 #include "shape.h"
 #include <QPoint>
-#include <QRect>
+#include <QColor>
 
 class Canvas;  // 前向声明
 
@@ -11,7 +11,7 @@ class Ellipse : public Shape
 {
     friend class Canvas;  // 允许Canvas访问私有成员
 public:
-    Ellipse(const QPoint& startPoint);
+    Ellipse(const QPoint& startPoint, const QColor& color = Qt::black);
     ~Ellipse() override = default;
 
     void draw(QPainter& painter) const override;
@@ -22,6 +22,7 @@ public:
 private:
     QPoint startPoint;
     QPoint endPoint;
+    bool complete = false;
     QRect boundingRect() const;
 };
 

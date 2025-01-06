@@ -1,10 +1,11 @@
 #include "text.h"
-#include <QPainter>
 #include <QFontMetrics>
 
-Text::Text(const QPoint& pos)
-    : position(pos)
-    , backgroundColor(Qt::white)  // 默认背景色为白色
+Text::Text(const QPoint& startPoint, const QColor& color)
+    : Shape(startPoint, color)
+    , position(startPoint)
+    , backgroundColor(color)
+    , font("Arial", 12)
 {
     updateTextRect();
 }
@@ -16,11 +17,15 @@ void Text::draw(QPainter& painter) const
         drawDashedRect(painter, textRect);
     }
 
+    // 绘制背景
+    if (backgroundColor.isValid()) {
+        painter.fillRect(textRect, backgroundColor);
+    }
+
     // 绘制文本
     if (!text.isEmpty()) {
-        QColor textColor = getContrastColor(backgroundColor);
-        painter.setPen(textColor);
         painter.setFont(font);
+        painter.setPen(getContrastColor(backgroundColor));
         painter.drawText(textRect.adjusted(padding, padding, -padding, -padding),
                         Qt::AlignLeft | Qt::AlignVCenter,
                         text);
@@ -85,11 +90,11 @@ bool Text::isComplete() const
 
 Shape* Text::clone() const
 {
-    auto* cloned = new Text(position);
+    auto* cloned = new Text(position, backgroundColor);
     cloned->text = text;
     cloned->editing = editing;
     cloned->textRect = textRect;
-    cloned->backgroundColor = backgroundColor;
+    cloned->font = font;
     cloned->background = background;
     return cloned;
 }
@@ -126,10 +131,9 @@ void Text::updateBackgroundColor(const QColor& color)
 
 QColor Text::getContrastColor(const QColor& color) const
 {
-    // 计算补色
-    return QColor(255 - color.red(),
-                 255 - color.green(),
-                 255 - color.blue());
+    // 计算亮度
+    int brightness = (color.red() * 299 + color.green() * 587 + color.blue() * 114) / 1000;
+    return brightness > 128 ? Qt::black : Qt::white;
 }
 
 void Text::updateTextRect()
