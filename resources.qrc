@@ -1,0 +1,14 @@
+<RCC>
+    <qresource>
+        <file>icons/polyline.svg</file>
+        <file>icons/ellipse.svg</file>
+        <file>icons/rectangle.svg</file>
+        <file>icons/arrow.svg</file>
+        <file>icons/freehand.svg</file>
+        <file>icons/marker.svg</file>
+        <file>icons/mosaic.svg</file>
+        <file>icons/text.svg</file>
+        <file>icons/undo.svg</file>
+        <file>icons/redo.svg</file>
+    </qresource>
+</RCC>
