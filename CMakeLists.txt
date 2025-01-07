@@ -34,8 +34,8 @@ set(PROJECT_SOURCES
     src/shapes/arrow.cpp
     src/shapes/freehand.h
     src/shapes/freehand.cpp
-    src/shapes/marker.h
-    src/shapes/marker.cpp
+    src/shapes/highlighter.h
+    src/shapes/highlighter.cpp
     src/shapes/mosaic.h
     src/shapes/mosaic.cpp
     src/shapes/text.h
