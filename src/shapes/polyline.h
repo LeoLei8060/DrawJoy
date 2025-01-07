@@ -20,12 +20,16 @@ public:
     bool isComplete() const override;
     Shape* clone() const override;
     void finishLine();
+    
+    void addPoint(const QPoint& point);  // 添加新的点
+    void setPreviewPoint(const QPoint& point);  // 设置预览点
 
 private:
-    QVector<QPoint> points;
-    QPoint currentPoint;
-    bool complete = false;
-    QColor color;
+    QVector<QPoint> m_points;      // 已确认的点
+    QPoint m_previewPoint;         // 预览点（跟随鼠标移动）
+    bool m_hasPreview = false;     // 是否显示预览线
+    bool m_complete = false;
+    QColor m_color;
 };
 
 #endif // POLYLINE_H

@@ -2,25 +2,26 @@
 #define RECTANGLE_H
 
 #include "shape.h"
-#include <QPoint>
 #include <QColor>
+#include <QPoint>
 
 class Rectangle : public Shape
 {
 public:
-    Rectangle(const QPoint& startPoint, const QColor& color = Qt::black);
+    Rectangle(const QPoint &startPoint, const QColor &color = Qt::black);
     ~Rectangle() override = default;
 
-    void draw(QPainter& painter) const override;
-    void updateShape(const QPoint& pos) override;
-    bool isComplete() const override;
-    Shape* clone() const override;
+    void   draw(QPainter &painter) const override;
+    void   updateShape(const QPoint &pos) override;
+    bool   isComplete() const override;
+    Shape *clone() const override;
 
 private:
-    QPoint startPoint;
-    QPoint endPoint;
-    QColor color;
-    bool complete = false;
+    QPoint m_startPoint;
+    QPoint m_endPoint;
+    QColor m_color;
+    bool   m_complete = false;
+
     QRect boundingRect() const;
 };
 

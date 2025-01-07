@@ -1,55 +1,61 @@
 #include "polyline.h"
 
-Polyline::Polyline(const QPoint& startPoint, const QColor& color)
+Polyline::Polyline(const QPoint &startPoint, const QColor &color)
     : Shape(startPoint, color)
 {
-    points.append(startPoint);
-    currentPoint = startPoint;
+    m_points.append(startPoint);
 }
 
-void Polyline::draw(QPainter& painter) const
+void Polyline::draw(QPainter &painter) const
 {
-    if (points.isEmpty()) return;
+    painter.setPen(QPen(m_penColor, 2));
 
-    painter.setPen(QPen(penColor, 2));
-
-    // 绘制已确定的线段
-    for (int i = 0; i < points.size() - 1; ++i) {
-        painter.drawLine(points[i], points[i + 1]);
+    // 绘制已确认的线段
+    if (m_points.size() > 1) {
+        for (int i = 1; i < m_points.size(); ++i) {
+            painter.drawLine(m_points[i - 1], m_points[i]);
+        }
     }
 
-    // 绘制当前正在绘制的线段（鼠标移动时的预览）
-    if (!complete && !points.isEmpty()) {
-        painter.drawLine(points.last(), currentPoint);
+    // 绘制预览线段
+    if (m_hasPreview && !m_points.isEmpty()) {
+        painter.drawLine(m_points.last(), m_previewPoint);
     }
 }
 
-void Polyline::updateShape(const QPoint& pos)
+void Polyline::updateShape(const QPoint &pos)
 {
-    if (complete) return;
-    if (points.size() > 0) {
-        points.append(pos);
+    if (!m_complete) {
+        setPreviewPoint(pos);
     }
-    currentPoint = pos;
+}
+
+void Polyline::addPoint(const QPoint &point)
+{
+    if (!m_complete) {
+        m_points.append(point);
+    }
+}
+
+void Polyline::setPreviewPoint(const QPoint &point)
+{
+    if (!m_complete) {
+        m_previewPoint = point;
+        m_hasPreview = true;
+    }
 }
 
 bool Polyline::isComplete() const
 {
-    return complete;
+    return m_complete;
 }
 
-Shape* Polyline::clone() const
+Shape *Polyline::clone() const
 {
-    auto* newPolyline = new Polyline(points.first(), penColor);
-    newPolyline->points = points;
-    newPolyline->currentPoint = currentPoint;
-    newPolyline->complete = complete;
-    return newPolyline;
-}
-
-void Polyline::finishLine()
-{
-    if (!complete && points.size() >= 2) {
-        complete = true;
-    }
+    auto *newShape = new Polyline(m_start, m_penColor);
+    newShape->m_points = m_points;
+    newShape->m_previewPoint = m_previewPoint;
+    newShape->m_hasPreview = m_hasPreview;
+    newShape->m_complete = m_complete;
+    return newShape;
 }
