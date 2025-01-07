@@ -63,7 +63,9 @@ void Canvas::mousePressEvent(QMouseEvent *event)
         } else {
             if (currentMode == DrawMode::DrawPolyline) {
                 // 对于折线，每次点击都添加新的点
-                static_cast<Polyline *>(currentShape.get())->m_points.append(event->pos());
+                static_cast<Polyline *>(currentShape.get())->addPoint(event->pos());
+                // TODO: delete
+                //                static_cast<Polyline *>(currentShape.get())->m_points.append(event->pos());
             } else if (currentMode == DrawMode::DrawText) {
                 // 如果点击在文本框外，结束编辑
                 auto textShape = static_cast<Text *>(currentShape.get());
@@ -88,14 +90,18 @@ void Canvas::mousePressEvent(QMouseEvent *event)
         update();
     } else if (event->button() == Qt::RightButton) {
         if (currentShape) {
-            //            if (currentMode == DrawMode::DrawPolyline) {
-            //                static_cast<Polyline *>(currentShape.get())->finishLine();
-            //                finishCurrentShape();
-            //            } else if (currentMode == DrawMode::DrawMosaic) {
-            //                mosaicType = (mosaicType == 0) ? 1 : 0;
-            //            }
-            shapes.push_back(std::move(currentShape));
-            redoStack.clear();
+            if (currentMode == DrawMode::DrawPolyline) {
+                auto tmpObj = static_cast<Polyline *>(currentShape.get());
+                tmpObj->finishLine();
+                if (tmpObj->isInvalid()) {
+                    removeCurrentShape();
+                    update();
+                    return;
+                }
+            } /*else if (currentMode == DrawMode::DrawMosaic) {
+                mosaicType = (mosaicType == 0) ? 1 : 0;
+            }*/
+            finishCurrentShape();
             update();
         }
     }
@@ -319,6 +325,14 @@ void Canvas::finishCurrentShape()
 {
     if (currentShape) {
         shapes.push_back(std::move(currentShape));
+        redoStack.clear();
+    }
+}
+
+void Canvas::removeCurrentShape()
+{
+    if (currentShape) {
+        currentShape.reset();
         redoStack.clear();
     }
 }

@@ -18,7 +18,7 @@ void Polyline::draw(QPainter &painter) const
     }
 
     // 绘制预览线段
-    if (m_hasPreview && !m_points.isEmpty()) {
+    if (!m_complete && m_hasPreview && !m_points.isEmpty()) {
         painter.drawLine(m_points.last(), m_previewPoint);
     }
 }
@@ -58,4 +58,12 @@ Shape *Polyline::clone() const
     newShape->m_hasPreview = m_hasPreview;
     newShape->m_complete = m_complete;
     return newShape;
+}
+
+void Polyline::finishLine()
+{
+    if (!m_complete && m_points.size() >= 2) {
+        m_complete = true;
+    } else if (!m_complete && m_points.size() <= 1)
+        m_isInvalid = true;
 }

@@ -55,8 +55,9 @@ protected:
 
 private:
     void createShape(const QPoint &pos);
-    void finishCurrentShape();
     void handleTextInput(const QPoint &pos);
+    void finishCurrentShape();
+    void removeCurrentShape();
 
     DrawMode                            currentMode;
     std::unique_ptr<Shape>              currentShape;
