@@ -1,13 +1,13 @@
 #ifndef CANVAS_H
 #define CANVAS_H
 
-#include <QWidget>
+#include <memory>
 #include <stack>
 #include <vector>
-#include <memory>
+#include <QColor> // 添加QColor头文件
 #include <QInputDialog>
 #include <QKeyEvent>
-#include <QColor> // 添加QColor头文件
+#include <QWidget>
 
 // 前向声明
 class Shape;
@@ -31,7 +31,7 @@ public:
         DrawRectangle,
         DrawArrow,
         DrawFreehand,
-        DrawMarker,
+        DrawHighlighter,
         DrawMosaic,
         DrawText
     };
@@ -40,31 +40,31 @@ public:
     ~Canvas();
 
     void setDrawMode(int mode);
-    void setPenColor(const QColor& color);  // 添加设置画笔颜色的方法
+    void setPenColor(const QColor &color); // 添加设置画笔颜色的方法
     void undo();
     void redo();
 
 protected:
-    void paintEvent(QPaintEvent *event) override;
-    void mousePressEvent(QMouseEvent *event) override;
-    void mouseMoveEvent(QMouseEvent *event) override;
-    void mouseReleaseEvent(QMouseEvent *event) override;
-    void keyPressEvent(QKeyEvent *event) override;
-    void inputMethodEvent(QInputMethodEvent *event) override;
+    void     paintEvent(QPaintEvent *event) override;
+    void     mousePressEvent(QMouseEvent *event) override;
+    void     mouseMoveEvent(QMouseEvent *event) override;
+    void     mouseReleaseEvent(QMouseEvent *event) override;
+    void     keyPressEvent(QKeyEvent *event) override;
+    void     inputMethodEvent(QInputMethodEvent *event) override;
     QVariant inputMethodQuery(Qt::InputMethodQuery query) const override;
 
 private:
-    void createShape(const QPoint& pos);
+    void createShape(const QPoint &pos);
     void finishCurrentShape();
-    void handleTextInput(const QPoint& pos);
+    void handleTextInput(const QPoint &pos);
 
-    DrawMode currentMode;
-    std::unique_ptr<Shape> currentShape;
+    DrawMode                            currentMode;
+    std::unique_ptr<Shape>              currentShape;
     std::vector<std::unique_ptr<Shape>> shapes;
     std::vector<std::unique_ptr<Shape>> redoStack;
-    int mosaicType = 0; // 0 for Rectangle, 1 for Circle
-    QString preeditString;  // 用于存储输入法的预编辑文本
-    QColor penColor; // 添加画笔颜色成员变量
+    int                                 mosaicType = 0; // 0 for Rectangle, 1 for Circle
+    QString                             preeditString;  // 用于存储输入法的预编辑文本
+    QColor                              penColor;       // 添加画笔颜色成员变量
 };
 
 #endif // CANVAS_H

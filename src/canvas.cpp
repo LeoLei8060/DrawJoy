@@ -1,34 +1,32 @@
 #include "canvas.h"
-#include <QPainter>
-#include <QMouseEvent>
-#include <QKeyEvent>
-#include "shapes/shape.h"
-#include "shapes/polyline.h"
-#include "shapes/ellipse.h"
-#include "shapes/rectangle.h"
 #include "shapes/arrow.h"
+#include "shapes/ellipse.h"
 #include "shapes/freehand.h"
-#include "shapes/marker.h"
+#include "shapes/highlighter.h"
 #include "shapes/mosaic.h"
+#include "shapes/polyline.h"
+#include "shapes/rectangle.h"
+#include "shapes/shape.h"
 #include "shapes/text.h"
+#include <QKeyEvent>
+#include <QMouseEvent>
+#include <QPainter>
 
 Canvas::Canvas(QWidget *parent)
     : QWidget(parent)
     , currentMode(DrawMode::DrawPolyline)
     , mosaicType(0)
-    , penColor(Qt::black)  // 初始化画笔颜色为黑色
+    , penColor(Qt::black) // 初始化画笔颜色为黑色
 {
     setMouseTracking(true);
     setAttribute(Qt::WA_StaticContents);
     setBackgroundRole(QPalette::Base);
     setAutoFillBackground(true);
-    setFocusPolicy(Qt::StrongFocus);  // 允许接收键盘焦点
-    setAttribute(Qt::WA_InputMethodEnabled);  // 启用输入法
+    setFocusPolicy(Qt::StrongFocus);         // 允许接收键盘焦点
+    setAttribute(Qt::WA_InputMethodEnabled); // 启用输入法
 }
 
-Canvas::~Canvas()
-{
-}
+Canvas::~Canvas() {}
 
 void Canvas::mousePressEvent(QMouseEvent *event)
 {
@@ -36,21 +34,28 @@ void Canvas::mousePressEvent(QMouseEvent *event)
         if (!currentShape) {
             if (currentMode == DrawMode::DrawText) {
                 setCursor(Qt::IBeamCursor);
-                setFocus();  // 获取键盘焦点
-                
+                setFocus(); // 获取键盘焦点
+
                 // 获取点击位置的背景颜色
                 QPixmap pixmap = grab(QRect(event->pos(), QSize(1, 1)));
-                QImage image = pixmap.toImage();
-                QColor backgroundColor = image.pixelColor(0, 0);
-                
+                QImage  image = pixmap.toImage();
+                QColor  backgroundColor = image.pixelColor(0, 0);
+
                 createShape(event->pos());
                 if (currentShape) {
-                    auto textShape = static_cast<Text*>(currentShape.get());
+                    auto textShape = static_cast<Text *>(currentShape.get());
                     textShape->updateBackgroundColor(backgroundColor);
-                    
+
                     // 获取文本框区域的背景
-                    QRect bgRect = textShape->textRect;
+                    QRect bgRect = textShape->m_textRect;
                     textShape->setBackground(grab(bgRect));
+                }
+            } else if (currentMode == DrawMode::DrawMosaic) {
+                currentShape = std::make_unique<Mosaic>(event->pos(),
+                                                        static_cast<Mosaic::MosaicType>(mosaicType),
+                                                        penColor);
+                if (auto *mosaic = static_cast<Mosaic *>(currentShape.get())) {
+                    mosaic->setBackground(grab()); // 获取当前画布内容作为背景
                 }
             } else {
                 createShape(event->pos());
@@ -58,13 +63,13 @@ void Canvas::mousePressEvent(QMouseEvent *event)
         } else {
             if (currentMode == DrawMode::DrawPolyline) {
                 // 对于折线，每次点击都添加新的点
-                static_cast<Polyline*>(currentShape.get())->points.append(event->pos());
+                static_cast<Polyline *>(currentShape.get())->m_points.append(event->pos());
             } else if (currentMode == DrawMode::DrawText) {
                 // 如果点击在文本框外，结束编辑
-                auto textShape = static_cast<Text*>(currentShape.get());
-                if (!textShape->textRect.contains(event->pos())) {
+                auto textShape = static_cast<Text *>(currentShape.get());
+                if (!textShape->m_textRect.contains(event->pos())) {
                     if (textShape->isEmpty()) {
-                        currentShape.reset();  // 如果没有输入文本，取消本次操作
+                        currentShape.reset(); // 如果没有输入文本，取消本次操作
                     } else {
                         textShape->finishEdit();
                         finishCurrentShape();
@@ -74,7 +79,7 @@ void Canvas::mousePressEvent(QMouseEvent *event)
                 } else {
                     // 如果点击在文本框内，记录偏移量并更新背景
                     textShape->startMove(event->pos());
-                    textShape->setBackground(grab(textShape->textRect));
+                    textShape->setBackground(grab(textShape->m_textRect));
                 }
             } else {
                 currentShape->updateShape(event->pos());
@@ -83,12 +88,14 @@ void Canvas::mousePressEvent(QMouseEvent *event)
         update();
     } else if (event->button() == Qt::RightButton) {
         if (currentShape) {
-            if (currentMode == DrawMode::DrawPolyline) {
-                static_cast<Polyline*>(currentShape.get())->finishLine();
-                finishCurrentShape();
-            } else if (currentMode == DrawMode::DrawMosaic) {
-                mosaicType = (mosaicType == 0) ? 1 : 0;
-            }
+            //            if (currentMode == DrawMode::DrawPolyline) {
+            //                static_cast<Polyline *>(currentShape.get())->finishLine();
+            //                finishCurrentShape();
+            //            } else if (currentMode == DrawMode::DrawMosaic) {
+            //                mosaicType = (mosaicType == 0) ? 1 : 0;
+            //            }
+            shapes.push_back(std::move(currentShape));
+            redoStack.clear();
             update();
         }
     }
@@ -99,10 +106,10 @@ void Canvas::mouseMoveEvent(QMouseEvent *event)
     if (currentShape) {
         if (event->buttons() & Qt::LeftButton || currentMode == DrawMode::DrawPolyline) {
             if (currentMode == DrawMode::DrawText) {
-                auto textShape = static_cast<Text*>(currentShape.get());
+                auto textShape = static_cast<Text *>(currentShape.get());
                 textShape->updateShape(event->pos());
                 // 更新移动后的背景
-                textShape->setBackground(grab(textShape->textRect));
+                textShape->setBackground(grab(textShape->m_textRect));
             } else {
                 currentShape->updateShape(event->pos());
             }
@@ -118,8 +125,8 @@ void Canvas::mouseReleaseEvent(QMouseEvent *event)
             currentShape->updateShape(event->pos());
             // 对于椭圆，检查起点和终点是否重合
             if (currentMode == DrawMode::DrawEllipse) {
-                auto ellipse = static_cast<Ellipse*>(currentShape.get());
-                if (ellipse->startPoint == ellipse->endPoint) {
+                auto ellipse = static_cast<Ellipse *>(currentShape.get());
+                if (ellipse->m_startPoint == ellipse->m_endPoint) {
                     currentShape.reset();
                     return;
                 }
@@ -133,8 +140,8 @@ void Canvas::mouseReleaseEvent(QMouseEvent *event)
 void Canvas::keyPressEvent(QKeyEvent *event)
 {
     if (currentShape && currentMode == DrawMode::DrawText) {
-        auto textShape = static_cast<Text*>(currentShape.get());
-        
+        auto textShape = static_cast<Text *>(currentShape.get());
+
         if (event->key() == Qt::Key_Backspace) {
             textShape->removeLastChar();
             update();
@@ -160,8 +167,8 @@ void Canvas::keyPressEvent(QKeyEvent *event)
 void Canvas::inputMethodEvent(QInputMethodEvent *event)
 {
     if (currentShape && currentMode == DrawMode::DrawText) {
-        auto textShape = static_cast<Text*>(currentShape.get());
-        
+        auto textShape = static_cast<Text *>(currentShape.get());
+
         // 如果有提交的文本，直接添加到当前文本
         if (!event->commitString().isEmpty()) {
             textShape->appendText(event->commitString());
@@ -174,13 +181,13 @@ void Canvas::inputMethodEvent(QInputMethodEvent *event)
 QVariant Canvas::inputMethodQuery(Qt::InputMethodQuery query) const
 {
     if (currentShape && currentMode == DrawMode::DrawText) {
-        auto textShape = static_cast<Text*>(currentShape.get());
-        QFontMetrics metrics(textShape->font);
-        int cursorX = textShape->textRect.left() + textShape->padding;
+        auto         textShape = static_cast<Text *>(currentShape.get());
+        QFontMetrics metrics(textShape->m_font);
+        int          cursorX = textShape->m_textRect.left() + textShape->m_padding;
         if (!textShape->getText().isEmpty()) {
             cursorX += metrics.horizontalAdvance(textShape->getText());
         }
-        
+
         switch (query) {
         case Qt::ImEnabled:
             return true;
@@ -189,16 +196,16 @@ QVariant Canvas::inputMethodQuery(Qt::InputMethodQuery query) const
         case Qt::ImAnchorPosition:
             return textShape->getText().length();
         case Qt::ImCursorRectangle:
-            return QRect(cursorX, textShape->textRect.top(), 1, textShape->textRect.height());
+            return QRect(cursorX, textShape->m_textRect.top(), 1, textShape->m_textRect.height());
         case Qt::ImFont:
-            return QVariant::fromValue(textShape->font);
+            return QVariant::fromValue(textShape->m_font);
         case Qt::ImCurrentSelection:
             return QString();
         case Qt::ImMaximumTextLength:
             return 65535;
         case Qt::ImHints:
-            return int(Qt::ImhMultiLine | Qt::ImhPreferNumbers | Qt::ImhPreferUppercase | 
-                      Qt::ImhPreferLowercase | Qt::ImhNoPredictiveText);
+            return int(Qt::ImhMultiLine | Qt::ImhPreferNumbers | Qt::ImhPreferUppercase
+                       | Qt::ImhPreferLowercase | Qt::ImhNoPredictiveText);
         default:
             break;
         }
@@ -206,7 +213,7 @@ QVariant Canvas::inputMethodQuery(Qt::InputMethodQuery query) const
     return QWidget::inputMethodQuery(query);
 }
 
-void Canvas::createShape(const QPoint& pos)
+void Canvas::createShape(const QPoint &pos)
 {
     switch (currentMode) {
     case DrawMode::DrawPolyline:
@@ -224,11 +231,13 @@ void Canvas::createShape(const QPoint& pos)
     case DrawMode::DrawFreehand:
         currentShape = std::make_unique<Freehand>(pos, penColor);
         break;
-    case DrawMode::DrawMarker:
-        currentShape = std::make_unique<Marker>(pos, penColor);
+    case DrawMode::DrawHighlighter:
+        currentShape = std::make_unique<Highlighter>(pos, penColor);
         break;
     case DrawMode::DrawMosaic:
-        currentShape = std::make_unique<Mosaic>(pos, static_cast<Mosaic::MosaicType>(mosaicType), penColor);
+        currentShape = std::make_unique<Mosaic>(pos,
+                                                static_cast<Mosaic::MosaicType>(mosaicType),
+                                                penColor);
         break;
     case DrawMode::DrawText:
         currentShape = std::make_unique<Text>(pos, penColor);
@@ -238,7 +247,7 @@ void Canvas::createShape(const QPoint& pos)
     }
 }
 
-void Canvas::handleTextInput(const QPoint& pos)
+void Canvas::handleTextInput(const QPoint &pos)
 {
     createShape(pos);
 }
@@ -249,7 +258,7 @@ void Canvas::paintEvent(QPaintEvent *event)
     painter.setRenderHint(QPainter::Antialiasing);
 
     // Draw all completed shapes
-    for (const auto& shape : shapes) {
+    for (const auto &shape : shapes) {
         shape->draw(painter);
     }
 
@@ -266,12 +275,11 @@ void Canvas::setDrawMode(int mode)
         setCursor(Qt::IBeamCursor);
     } else {
         setCursor(Qt::ArrowCursor);
-        clearFocus();  // 切换到其他模式时清除焦点
+        clearFocus(); // 切换到其他模式时清除焦点
     }
-    
+
     if (currentShape) {
-        if (currentMode == DrawMode::DrawText && 
-            dynamic_cast<Text*>(currentShape.get())) {
+        if (currentMode == DrawMode::DrawText && dynamic_cast<Text *>(currentShape.get())) {
             // 如果当前正在编辑文本，不要重置
             return;
         }
@@ -280,7 +288,7 @@ void Canvas::setDrawMode(int mode)
     }
 }
 
-void Canvas::setPenColor(const QColor& color)
+void Canvas::setPenColor(const QColor &color)
 {
     penColor = color;
     if (currentShape) {
