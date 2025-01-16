@@ -59,13 +59,13 @@ private:
     void finishCurrentShape();
     void removeCurrentShape();
 
-    DrawMode                            currentMode;
-    std::unique_ptr<Shape>              currentShape;
-    std::vector<std::unique_ptr<Shape>> shapes;
-    std::vector<std::unique_ptr<Shape>> redoStack;
-    int                                 mosaicType = 0; // 0 for Rectangle, 1 for Circle
-    QString                             preeditString;  // 用于存储输入法的预编辑文本
-    QColor                              penColor;       // 添加画笔颜色成员变量
+    DrawMode                            m_currentMode;
+    std::unique_ptr<Shape>              m_currentShape;
+    std::vector<std::unique_ptr<Shape>> m_shapes;
+    std::vector<std::unique_ptr<Shape>> m_redoStack;
+    int                                 m_mosaicType = 0; // 0 for Rectangle, 1 for Circle
+    QString                             m_preeditString;  // 用于存储输入法的预编辑文本
+    QColor                              m_penColor;       // 添加画笔颜色成员变量
 };
 
 #endif // CANVAS_H
